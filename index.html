@@ -267,9 +267,8 @@
   .slot-toolbar {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 4px;
-    min-height: 26px;
+    min-height: 32px;
   }
 
   .slot-btn {
@@ -284,6 +283,7 @@
     color: var(--ink-soft);
     cursor: pointer;
     padding: 0;
+    flex-shrink: 0;
     transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
   }
   .slot-btn:hover { color: var(--ink); border-color: var(--frame-soft); }
@@ -296,13 +296,32 @@
   }
   .slot-btn.confirm:hover { color: #fff; }
 
+  /* the bg toggle previews the surface it switches TO (a whiteboard icon
+     while on blackboard, and vice versa), and reads as a tiny board — not
+     a color swatch — so it isn't mistaken for a palette color */
   .slot-bg {
-    border-radius: 50%;
-    background: var(--board-bg);
+    border-radius: 4px;
+    background: linear-gradient(160deg, #faf6ee 0%, #f1ead9 100%);
+    border-color: rgba(42,36,32,0.18);
   }
   .slot.mode-white .slot-bg {
-    background: #f4efe3;
+    background: radial-gradient(120% 140% at 20% 0%, var(--board-bg-2) 0%, var(--board-bg) 55%);
+    border-color: rgba(242,237,226,0.22);
   }
+
+  .slot-toolbar-spacer { flex: 1; }
+
+  .slot-copy {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--chalk-yellow);
+    color: var(--chalk-yellow-ink);
+    border-color: transparent;
+    margin-right: 10px;
+  }
+  .slot-copy:hover { color: var(--chalk-yellow-ink); filter: brightness(1.06); }
+  .slot-copy svg { width: 15px; height: 15px; }
 
   .slot-frame {
     background: linear-gradient(160deg, var(--board-frame) 0%, var(--board-frame-dark) 100%);
@@ -739,9 +758,13 @@
     bgBtn.title = '下地を切り替え（黒板地／白地）';
     toolbar.appendChild(bgBtn);
 
+    var spacer = document.createElement('div');
+    spacer.className = 'slot-toolbar-spacer';
+    toolbar.appendChild(spacer);
+
     var copyBtn = document.createElement('button');
     copyBtn.type = 'button';
-    copyBtn.className = 'slot-btn';
+    copyBtn.className = 'slot-btn slot-copy';
     copyBtn.title = 'コピー';
     copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
     toolbar.appendChild(copyBtn);
