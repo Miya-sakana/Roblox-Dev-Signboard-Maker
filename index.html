@@ -1,0 +1,816 @@
+<meta charset="utf-8">
+<title>看板テキストメーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style id="app-style">
+  :root {
+    --paper: #eef1ec;
+    --ink: #24312b;
+    --ink-soft: #56645c;
+    --panel: #f8faf7;
+    --panel-edge: rgba(36,49,43,0.10);
+    --frame: #5b4230;
+    --frame-soft: rgba(91,66,48,0.35);
+    --chalk-yellow: #cf9328;
+    --chalk-yellow-ink: #3a2a0d;
+    --rule: rgba(36,49,43,0.12);
+    --danger: #9a3b3b;
+
+    --board-bg: #1b2e28;
+    --board-bg-2: #22372f;
+    --board-ink: #f2ede2;
+    --board-frame: #4a3527;
+    --board-frame-dark: #2d1f16;
+
+    --font-display: 'Yuji Syuku', serif;
+    --font-body: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #131e19;
+      --ink: #e9e4d6;
+      --ink-soft: #a9b3aa;
+      --panel: #1b2823;
+      --panel-edge: rgba(233,228,214,0.10);
+      --frame: #9c795a;
+      --frame-soft: rgba(156,121,90,0.45);
+      --chalk-yellow: #e0ab48;
+      --chalk-yellow-ink: #2a1c05;
+      --rule: rgba(233,228,214,0.14);
+      --danger: #d98a8a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #131e19;
+    --ink: #e9e4d6;
+    --ink-soft: #a9b3aa;
+    --panel: #1b2823;
+    --panel-edge: rgba(233,228,214,0.10);
+    --frame: #9c795a;
+    --frame-soft: rgba(156,121,90,0.45);
+    --chalk-yellow: #e0ab48;
+    --chalk-yellow-ink: #2a1c05;
+    --rule: rgba(233,228,214,0.14);
+    --danger: #d98a8a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .wrap {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 40px 20px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .eyebrow {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--chalk-yellow);
+    font-weight: 700;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 34px;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: 0.02em;
+  }
+
+  .lede {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    line-height: 1.7;
+    max-width: 75ch;
+  }
+
+  .lede code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    background: var(--panel-edge);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+  }
+
+  /* ---- palette tray ---- */
+
+  .tray {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tray-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tray-label {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+    width: 78px;
+    flex-shrink: 0;
+  }
+
+  .swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.12);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.25);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    transition: transform 0.12s ease;
+  }
+  .swatch:hover { transform: translateY(-2px); }
+  .swatch:active { transform: translateY(0); }
+  .swatch:focus-visible {
+    outline: 2px solid var(--chalk-yellow);
+    outline-offset: 2px;
+  }
+
+  .swatch-name {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9.5px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+  }
+  .swatch:hover .swatch-name,
+  .swatch:focus-visible .swatch-name { opacity: 1; }
+
+  .custom-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px dashed var(--frame-soft);
+    background: conic-gradient(from 180deg, #ff5a5a, #ffd15a, #6bd47a, #5ab6ff, #b06bff, #ff5a5a);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+  }
+  .custom-swatch input[type="color"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--panel-edge);
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .tool-btn:hover { color: var(--ink); border-color: var(--frame-soft); }
+  .tool-btn svg { width: 14px; height: 14px; }
+
+  .divider {
+    height: 1px;
+    background: var(--rule);
+    margin: 0;
+  }
+
+  .toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--chalk-yellow-ink);
+    background: var(--chalk-yellow);
+    padding: 8px 16px;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---- boards grid ---- */
+
+  .boards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 820px) {
+    .boards-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .boards-grid { grid-template-columns: 1fr; }
+  }
+
+  .slot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .slot-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-height: 26px;
+  }
+
+  .slot-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--panel-edge);
+    border-radius: 7px;
+    background: var(--panel);
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  }
+  .slot-btn:hover { color: var(--ink); border-color: var(--frame-soft); }
+  .slot-btn svg { width: 13px; height: 13px; }
+
+  .slot-btn.confirm {
+    background: var(--danger);
+    border-color: transparent;
+    color: #fff;
+  }
+  .slot-btn.confirm:hover { color: #fff; }
+
+  .slot-bg {
+    border-radius: 50%;
+    background: var(--board-bg);
+  }
+  .slot.mode-white .slot-bg {
+    background: #f4efe3;
+  }
+
+  .slot-frame {
+    background: linear-gradient(160deg, var(--board-frame) 0%, var(--board-frame-dark) 100%);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 10px 24px -16px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.25);
+  }
+
+  .slot-board {
+    background: radial-gradient(120% 140% at 20% 0%, var(--board-bg-2) 0%, var(--board-bg) 55%);
+    border: 2px dashed rgba(242,237,226,0.16);
+    border-radius: 5px;
+    padding: 14px;
+    min-height: 108px;
+    color: var(--board-ink);
+    font-size: 17px;
+    line-height: 1.5;
+    font-weight: 500;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    caret-color: var(--chalk-yellow);
+  }
+  .slot-board:focus { border-color: rgba(242,237,226,0.32); }
+  .slot-board.is-empty::before {
+    content: attr(data-placeholder);
+    color: rgba(242,237,226,0.38);
+    font-weight: 400;
+  }
+  .slot-board font { font-weight: inherit; }
+
+  .slot.mode-white .slot-frame {
+    background: linear-gradient(160deg, #cbb89a 0%, #a98f6b 100%);
+  }
+  .slot.mode-white .slot-board {
+    background: linear-gradient(160deg, #faf6ee 0%, #f1ead9 100%);
+    border-color: rgba(42,36,32,0.16);
+    color: #333333;
+  }
+  .slot.mode-white .slot-board.is-empty::before {
+    color: rgba(42,36,32,0.35);
+  }
+
+  /* the "add another board" tile: echoes the wood-frame shape so it reads
+     as the next open slot, not a separate control */
+  .add-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .add-tile-spacer { min-height: 26px; }
+  .add-tile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 128px;
+    border: 2px dashed var(--frame-soft);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .add-tile-btn:hover { color: var(--ink); border-color: var(--frame); background: var(--panel); }
+  .add-tile-btn svg { width: 22px; height: 22px; }
+
+  @media (max-width: 520px) {
+    .tray-label { width: auto; }
+    h1 { font-size: 27px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Sign Text Maker</span>
+    <h1>看板テキストメーカー</h1>
+    <p class="lede">
+      看板の数だけ枠を増やせる。枠ごとに丸いアイコンで黒板地・白地を切り替え可能（ブランドカラーは白地向き）。
+      ドラッグで選んで色をつけたら、コピーアイコンで Roblox Studio の Text プロパティに貼り付け。
+      いらなくなったら×アイコンをもう一度押して削除（このブラウザだけに保存されます）。
+    </p>
+  </header>
+
+  <div class="tray">
+    <div class="tray-row">
+      <span class="tray-label">コース</span>
+      <div class="swatches" id="course-swatches"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="tray-row">
+      <span class="tray-label">ブランド</span>
+      <div class="swatches" id="brand-swatches"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="tray-row">
+      <span class="tray-label">自由</span>
+      <div class="custom-swatch" title="自由な色を選ぶ">
+        <input type="color" id="custom-color" value="#ffffff" aria-label="カスタムカラー">
+      </div>
+      <button class="tool-btn" id="clear-format-btn" type="button" title="選択範囲の色を解除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M8.5 16 4 11.5l7-7 7 7-4.5 4.5"/><path d="m9 12 4-4"/></svg>
+        色を解除
+      </button>
+    </div>
+  </div>
+
+  <div class="boards-grid" id="boards-grid"></div>
+</div>
+
+<span class="toast" id="toast">コピーしました</span>
+
+<script id="app-script">
+(function () {
+  var COURSE_COLORS = [
+    { name: 'PJ', hex: '#f1a100' },
+    { name: 'MJ', hex: '#e74c3c' },
+    { name: 'MS', hex: '#0071bc' },
+    { name: 'CS', hex: '#02ac43' },
+    { name: 'CB', hex: '#088080' },
+    { name: 'CX', hex: '#6c24b4' },
+    { name: 'Roblox', hex: '#8c7dfc' }
+  ];
+
+  var BRAND_COLORS = [
+    { name: 'ベース/リンク', hex: '#0071bc' },
+    { name: 'CTA', hex: '#e86d26' },
+    { name: '警告', hex: '#df3030' },
+    { name: '必要に応じて', hex: '#02ac43' },
+    { name: 'テキスト', hex: '#333333' },
+    { name: '薄青1', hex: '#cce3f2' },
+    { name: '薄青2', hex: '#e5f1f8' },
+    { name: '薄青3', hex: '#f2f8fc' }
+  ];
+
+  var BOARDS_KEY = 'sbtm-boards';
+  var LEGACY_SLOTS_KEY = 'sbtm-slots';
+  var LEGACY_CARDS_KEY = 'sbtm-cards';
+  var MAX_BOARDS = 300; // quiet safety backstop, never surfaced as a limit
+
+  var boardsGrid = document.getElementById('boards-grid');
+  var toast = document.getElementById('toast');
+
+  var savedRange = null;
+  var toastTimer = null;
+  var addTileEl = null;
+
+  function loadJSON(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function saveJSON(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  function loadInitialBoards() {
+    var boards = loadJSON(BOARDS_KEY, null);
+    if (boards) return boards;
+
+    // one-time migration from the earlier "6 fixed slots + overflow cards" model
+    var legacySlots = loadJSON(LEGACY_SLOTS_KEY, []);
+    var legacyCards = loadJSON(LEGACY_CARDS_KEY, []);
+    var migrated = [];
+    legacySlots.forEach(function (s) {
+      if (s && s.rich && s.rich.replace(/\n/g, '').trim()) {
+        migrated.push({ id: newId(), rich: s.rich, white: !!s.white });
+      }
+    });
+    legacyCards.forEach(function (c) {
+      if (c && c.rich && c.rich.replace(/\n/g, '').trim()) {
+        migrated.push({ id: newId(), rich: c.rich, white: false });
+      }
+    });
+    return migrated;
+  }
+
+  function newId() {
+    return 'b' + Date.now() + Math.random().toString(36).slice(2, 7);
+  }
+
+  var initialBoards = loadInitialBoards();
+
+  // ---- rich text helpers ----
+
+  function escapeRich(text) {
+    return text
+      .replace(/​/g, '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function rgbToHex(rgb) {
+    var m = rgb.match(/[\d.]+/g);
+    if (!m) return null;
+    return '#' + m.slice(0, 3).map(function (n) {
+      return Math.round(parseFloat(n)).toString(16).padStart(2, '0');
+    }).join('');
+  }
+
+  function extractRich(node) {
+    var out = '';
+    node.childNodes.forEach(function (child) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        out += escapeRich(child.textContent);
+      } else if (child.nodeName === 'BR') {
+        out += '\n';
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        // Chromium's execCommand('foreColor') writes <font color="#..">;
+        // other engines may write <span style="color:..."> instead.
+        var color = null;
+        if (child.nodeName === 'FONT' && child.getAttribute('color')) {
+          color = child.getAttribute('color');
+        } else if (child.style && child.style.color) {
+          color = rgbToHex(child.style.color);
+        }
+        var inner = extractRich(child);
+        if (color) {
+          out += '<font color="' + color + '">' + inner + '</font>';
+        } else {
+          out += inner;
+        }
+      }
+    });
+    return out;
+  }
+
+  function richToHtml(rich) {
+    return (rich || '').split('\n').join('<br>​');
+  }
+
+  function updateEmptyState(board) {
+    var text = board.textContent.replace(/​/g, '');
+    board.classList.toggle('is-empty', text.length === 0);
+  }
+
+  // ---- selection tracking across every board on the page ----
+
+  function isSelectionInBoard(range) {
+    return Array.prototype.some.call(
+      boardsGrid.querySelectorAll('.slot-board'),
+      function (b) { return b.contains(range.commonAncestorContainer); }
+    );
+  }
+
+  document.addEventListener('selectionchange', function () {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    var range = sel.getRangeAt(0);
+    if (!range.collapsed && isSelectionInBoard(range)) {
+      savedRange = range.cloneRange();
+    }
+  });
+
+  function restoreSelection() {
+    if (!savedRange) return null;
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    var r = savedRange.cloneRange();
+    sel.addRange(r);
+    return r;
+  }
+
+  function applyColor(hex) {
+    var range = restoreSelection();
+    if (!range || range.collapsed) return;
+    document.execCommand('foreColor', false, hex);
+    persistBoardsSoon();
+  }
+
+  function buildSwatches(container, list) {
+    list.forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.className = 'swatch';
+      btn.type = 'button';
+      btn.style.background = c.hex;
+      btn.setAttribute('aria-label', c.name + ' ' + c.hex);
+      var label = document.createElement('span');
+      label.className = 'swatch-name';
+      label.textContent = c.name;
+      btn.appendChild(label);
+      btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      btn.addEventListener('click', function () { applyColor(c.hex); });
+      container.appendChild(btn);
+    });
+  }
+
+  buildSwatches(document.getElementById('course-swatches'), COURSE_COLORS);
+  buildSwatches(document.getElementById('brand-swatches'), BRAND_COLORS);
+
+  document.getElementById('custom-color').addEventListener('input', function (e) {
+    applyColor(e.target.value);
+  });
+
+  document.getElementById('clear-format-btn').addEventListener('mousedown', function (e) { e.preventDefault(); });
+  document.getElementById('clear-format-btn').addEventListener('click', function () {
+    var range = restoreSelection();
+    if (!range || range.collapsed) return;
+    document.execCommand('removeFormat');
+    persistBoardsSoon();
+  });
+
+  // ---- persistence: every board on the page, read straight from the DOM ----
+
+  var persistTimer = null;
+  function persistBoardsSoon() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(persistBoardsNow, 500);
+  }
+
+  function persistBoardsNow() {
+    var data = Array.prototype.map.call(boardsGrid.querySelectorAll('.slot'), function (wrap) {
+      var board = wrap.querySelector('.slot-board');
+      return {
+        id: wrap.dataset.id,
+        rich: extractRich(board),
+        white: wrap.classList.contains('mode-white')
+      };
+    });
+    saveJSON(BOARDS_KEY, data);
+  }
+
+  // ---- toast ----
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+  }
+
+  // ---- copy ----
+
+  function copyFromBoard(board) {
+    var text = extractRich(board);
+    if (!text.replace(/\n/g, '').trim()) return;
+
+    function legacyFallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      showToast(ok ? 'コピーしました' : 'コピーできませんでした');
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { showToast('コピーしました'); }).catch(legacyFallback);
+    } else {
+      legacyFallback();
+    }
+  }
+
+  // ---- two-step delete (no native confirm() — those can be blocked inside
+  // a sandboxed artifact frame) ----
+
+  function wireArmedButton(btn, armedTitle, restTitle, onConfirm) {
+    var armed = false;
+    var timer = null;
+    function disarm() {
+      armed = false;
+      btn.classList.remove('confirm');
+      btn.title = restTitle;
+    }
+    btn.title = restTitle;
+    btn.addEventListener('click', function () {
+      if (!armed) {
+        armed = true;
+        btn.classList.add('confirm');
+        btn.title = armedTitle;
+        clearTimeout(timer);
+        timer = setTimeout(disarm, 2500);
+        return;
+      }
+      clearTimeout(timer);
+      disarm();
+      onConfirm();
+    });
+  }
+
+  // ---- board tile factory ----
+
+  function createBoardTile(entry) {
+    var wrap = document.createElement('div');
+    wrap.className = 'slot';
+    wrap.dataset.id = entry.id;
+
+    var toolbar = document.createElement('div');
+    toolbar.className = 'slot-toolbar';
+
+    var bgBtn = document.createElement('button');
+    bgBtn.type = 'button';
+    bgBtn.className = 'slot-btn slot-bg';
+    bgBtn.title = '下地を切り替え（黒板地／白地）';
+    toolbar.appendChild(bgBtn);
+
+    var copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'slot-btn';
+    copyBtn.title = 'コピー';
+    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
+    toolbar.appendChild(copyBtn);
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'slot-btn';
+    delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>';
+    toolbar.appendChild(delBtn);
+
+    wrap.appendChild(toolbar);
+
+    var frame = document.createElement('div');
+    frame.className = 'slot-frame';
+
+    var board = document.createElement('div');
+    board.className = 'slot-board is-empty';
+    board.contentEditable = 'true';
+    board.setAttribute('data-placeholder', 'ここに入力…');
+    frame.appendChild(board);
+    wrap.appendChild(frame);
+
+    boardsGrid.insertBefore(wrap, addTileEl);
+
+    board.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        var range = sel.getRangeAt(0);
+        range.deleteContents();
+        var br = document.createElement('br');
+        range.insertNode(br);
+        // A <br> left as the trailing node makes the caret position after it
+        // ambiguous in contenteditable, so the next typed character can land
+        // before the <br> instead of after it. Anchor the caret in a real
+        // (zero-width) text node instead.
+        var spacer = document.createTextNode('​');
+        br.parentNode.insertBefore(spacer, br.nextSibling);
+        var after = document.createRange();
+        after.setStart(spacer, 1);
+        after.setEnd(spacer, 1);
+        sel.removeAllRanges();
+        sel.addRange(after);
+        persistBoardsSoon();
+      }
+    });
+
+    board.addEventListener('input', function () {
+      updateEmptyState(board);
+      persistBoardsSoon();
+    });
+
+    bgBtn.addEventListener('click', function () {
+      wrap.classList.toggle('mode-white');
+      persistBoardsSoon();
+    });
+    copyBtn.addEventListener('click', function () { copyFromBoard(board); });
+    wireArmedButton(delBtn, 'もう一度クリックで削除', '削除', function () {
+      wrap.remove();
+      persistBoardsNow();
+    });
+
+    if (entry.rich) board.innerHTML = richToHtml(entry.rich);
+    if (entry.white) wrap.classList.add('mode-white');
+    updateEmptyState(board);
+
+    return wrap;
+  }
+
+  function addBoard(entry) {
+    if (boardsGrid.querySelectorAll('.slot').length >= MAX_BOARDS) return;
+    createBoardTile(entry || { id: newId(), rich: '', white: false });
+    persistBoardsSoon();
+  }
+
+  // ---- the "+" tile that appends a new board ----
+
+  addTileEl = document.createElement('div');
+  addTileEl.className = 'add-tile';
+  addTileEl.innerHTML =
+    '<div class="add-tile-spacer"></div>' +
+    '<button type="button" class="add-tile-btn" title="看板を追加">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>' +
+    '追加</button>';
+  boardsGrid.appendChild(addTileEl);
+  addTileEl.querySelector('.add-tile-btn').addEventListener('click', function () {
+    addBoard();
+  });
+
+  if (initialBoards.length === 0) {
+    addBoard();
+  } else {
+    initialBoards.forEach(function (entry) { createBoardTile(entry); });
+  }
+  persistBoardsNow();
+})();
+</script>
