@@ -401,6 +401,11 @@
     </div>
     <div class="divider"></div>
     <div class="tray-row">
+      <span class="tray-label">マイクラ</span>
+      <div class="swatches" id="minecraft-swatches"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="tray-row">
       <span class="tray-label">自由</span>
       <div class="custom-swatch" title="自由な色を選ぶ">
         <input type="color" id="custom-color" value="#ffffff" aria-label="カスタムカラー">
@@ -438,6 +443,26 @@
     { name: '薄青1', hex: '#cce3f2' },
     { name: '薄青2', hex: '#e5f1f8' },
     { name: '薄青3', hex: '#f2f8fc' }
+  ];
+
+  var MINECRAFT_COLORS = [
+    { name: '§0', hex: '#000000' },
+    { name: '§1', hex: '#0000aa' },
+    { name: '§2', hex: '#00aa00' },
+    { name: '§3', hex: '#00aaaa' },
+    { name: '§4', hex: '#aa0000' },
+    { name: '§5', hex: '#aa00aa' },
+    { name: '§6', hex: '#ffaa00' },
+    { name: '§7', hex: '#aaaaaa' },
+    { name: '§8', hex: '#555555' },
+    { name: '§9', hex: '#5555ff' },
+    { name: '§a', hex: '#55ff55' },
+    { name: '§b', hex: '#55ffff' },
+    { name: '§c', hex: '#ff5555' },
+    { name: '§d', hex: '#ff55ff' },
+    { name: '§e', hex: '#ffff55' },
+    { name: '§f', hex: '#ffffff' },
+    { name: '§g', hex: '#ddd605' }
   ];
 
   var BOARDS_KEY = 'sbtm-boards';
@@ -600,6 +625,7 @@
 
   buildSwatches(document.getElementById('course-swatches'), COURSE_COLORS);
   buildSwatches(document.getElementById('brand-swatches'), BRAND_COLORS);
+  buildSwatches(document.getElementById('minecraft-swatches'), MINECRAFT_COLORS);
 
   document.getElementById('custom-color').addEventListener('input', function (e) {
     applyColor(e.target.value);
